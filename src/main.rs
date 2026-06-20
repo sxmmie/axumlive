@@ -10,14 +10,14 @@ use std::env;
 
 // This will be used to create a user
 #[derive(Deserialize)]
-struct UserPayload {
+pub struct UserPayload {
     name: String,
     email: String,
 }
 
 // Used to get a user or list of users
 #[derive(Serialize, FromRow)]
-struct User {
+pub struct User {
     id: i32,
     name: String,
     email: String,
@@ -42,12 +42,12 @@ async fn main() {
 
 // Endpoint Handlers
 // With this, we don't need connenction to the DB
-async fn root() -> &'static str {
+pub async fn root() -> &'static str {
     "welcome to the user management API!"
 }
 
 // Get All
-async fn list_users(State(pool): State<PgPool>) -> Result<Json<Vec<User>>, StatusCode> {
+pub async fn list_users(State(pool): State<PgPool>) -> Result<Json<Vec<User>>, StatusCode> {
     sqlx::query_as::<_, User>("SELECT * FROM users")
         .fetch_all(&pool)
         .await
@@ -55,7 +55,7 @@ async fn list_users(State(pool): State<PgPool>) -> Result<Json<Vec<User>>, Statu
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
 }
 
-async fn create_user(State(pool): State<PgPool>, Json(payload): Json<UserPayload>) -> Result<(StatusCode, Json<User>), StatusCode> {
+pub async fn create_user(State(pool): State<PgPool>, Json(payload): Json<UserPayload>) -> Result<(StatusCode, Json<User>), StatusCode> {
     sqlx::query_as::<_, User>("SELECT INTO users (name, email) VALUES ($1, $1) RETURNING *")
         .bind(payload.name)
         .bind(payload.email)
@@ -66,7 +66,7 @@ async fn create_user(State(pool): State<PgPool>, Json(payload): Json<UserPayload
 }
 
 // get user by id
-async fn get_user(State(pool): State<PgPool>, Path(id): Path<i32>) -> Result<Json<User>, StatusCode> {
+pub async fn get_user(State(pool): State<PgPool>, Path(id): Path<i32>) -> Result<Json<User>, StatusCode> {
     sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
         .bind(id)
         .fetch_one(&pool)
@@ -75,7 +75,7 @@ async fn get_user(State(pool): State<PgPool>, Path(id): Path<i32>) -> Result<Jso
         .map_err(|_| StatusCode::NOT_FOUND)
 }
 
-async fn update_user(State(pool): State<PgPool>, Path(id): Path<i32>, Json(payload): Json<UserPayload>) -> Result<Json<User>, StatusCode> {
+pub async fn update_user(State(pool): State<PgPool>, Path(id): Path<i32>, Json(payload): Json<UserPayload>) -> Result<Json<User>, StatusCode> {
     sqlx::query_as::<_, User>("UPDATE users SET name = $1, email = $2 WHERE id = $3 RETURNING *")
         .bind(payload.name)
         .bind(payload.email)
@@ -86,7 +86,7 @@ async fn update_user(State(pool): State<PgPool>, Path(id): Path<i32>, Json(paylo
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
 }
 
-async fn delete_user(State(pool): State<PgPool>, Path(id): Path<i32>) -> Result<StatusCode, StatusCode> {
+pub async fn delete_user(State(pool): State<PgPool>, Path(id): Path<i32>) -> Result<StatusCode, StatusCode> {
     let result = sqlx::query("DELETE FROM users WHERE id = $1 RETURNING *")
         .bind(id)
         .execute(&pool)
