@@ -10,6 +10,22 @@ services:
       POSTGRES_DB: axumlive_db
     volumes:
       - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d axumlive_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    container_name: axum_api
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgres://user:password@db:5432/axumlive_db
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   pg_data:
